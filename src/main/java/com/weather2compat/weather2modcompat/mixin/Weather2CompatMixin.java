@@ -1,6 +1,6 @@
 package com.weather2compat.weather2modcompat.mixin;
 
-import net.minecraft.world.level.LevelAccessor;
+import com.llamalad7.mixinextras.sugar.Share;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -15,52 +15,37 @@ import weather2.ServerTickHandler;
 import weather2.weathersystem.storm.StormObject;
 import net.minecraft.core.BlockPos;
 
+import javax.annotation.Nullable;
+
+
 @Mixin(Level.class)
-public abstract class Weather2CompatMixin {
+public abstract class Weather2CompatMixin{
 
-    // Shadow method for Level#getHeightmapPos(Heightmap.Types, BlockPos)
-    @Shadow
-    public abstract BlockPos getHeightmapPos(Heightmap.Types heightmapType, BlockPos pos);
-
-    // Shadow method for Level#canSeeSky(BlockPos)
-    @Shadow
-    public abstract boolean canSeeSky(BlockPos pos);
-
-    // Shadow method for Level#getBiome(BlockPos)
-    @Shadow
-    public abstract net.minecraft.core.Holder<Biome> getBiome(BlockPos pos);
-
-    @Shadow
-    public net.minecraft.world.level.Level levelData;
-
-    @Inject(method = "isRainingAt", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "Lnet/minecraft/world/level/Level;isRainingAt(Lnet/minecraft/core/BlockPos;)Z", at = @At("HEAD"), cancellable = true)
     private void redirectIsInWaterOrRain(BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
+        Level level = (Level) (Object) this;
 
         // Custom logic here
         double maxStormDist = ((double) (512)) / 4 * 3;
 
         Vec3 plPos = new Vec3(pos.getX(), StormObject.static_YPos_layer0, pos.getZ());
-        StormObject storm = ServerTickHandler.getWeatherManagerFor(levelData).getClosestStorm(plPos, maxStormDist,
+        StormObject storm = ServerTickHandler.getWeatherManagerFor(level).getClosestStorm(plPos, maxStormDist,
                 StormObject.STATE_FORMING, -1, true);
-
-        double stormDist = 9999;
-
-        float sizeToUse = 0;
 
         if (storm != null) {
 
-            sizeToUse = storm.size;
+            float sizeToUse = storm.size;
 
-            stormDist = storm.pos.distanceTo(plPos);
+            double stormDist = storm.pos.distanceTo(plPos);
 
             if (!(sizeToUse > stormDist)) {
                 cir.setReturnValue(false);
-            } else if (!this.canSeeSky(pos)) { // Use shadowed canSeeSky method
+            } else if (!level.canSeeSky(pos)) { // Use shadowed canSeeSky method
                 cir.setReturnValue(false);
-            } else if (this.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, pos).getY() > pos.getY()) { // Use shadowed getHeightmapPos method
+            } else if (level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, pos).getY() > pos.getY()) { // Use shadowed getHeightmapPos method
                 cir.setReturnValue(false);
             } else {
-                Biome biome = this.getBiome(pos).value(); // Use shadowed getBiome method
+                Biome biome = level.getBiome(pos).value(); // Use shadowed getBiome method
                 cir.setReturnValue(biome.getPrecipitationAt(pos) == Biome.Precipitation.RAIN);
             }
         } else {
