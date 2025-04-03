@@ -1,0 +1,15 @@
+{
+    "required": true,
+    "package": "com.weather2compat.weather2modcompat.mixin",
+    "compatibilityLevel": "JAVA_17",
+    "mixins": [
+        "Weather2CompatMixin",
+        "MixinClientWeatherHelper"
+    ],
+    "mixinextras": {
+		"minVersion": "0.4.1"
+	},
+    "injectors": {
+        "defaultRequire": 1
+    }
+}
