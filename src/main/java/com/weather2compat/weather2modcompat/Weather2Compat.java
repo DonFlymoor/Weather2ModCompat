@@ -15,6 +15,7 @@ public class Weather2Compat {
     public static final String MODID = "weather2modcompat";
     private static final Logger LOGGER = LogUtils.getLogger();
 
+    @SuppressWarnings("removal")
     public Weather2Compat() {
         // Initialize Mixin framework
         initMixins();
